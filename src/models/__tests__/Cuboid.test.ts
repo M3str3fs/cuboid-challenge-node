@@ -3,6 +3,48 @@ import Cuboid from '../Cuboid';
 
 let bag: Bag;
 
+jest.mock('../Bag', () => {
+  const originalModule = jest.requireActual('../Bag');
+
+  //Mock the default export and named export 'foo'
+  return {
+    __esModule: true,
+    ...originalModule,
+    default:  {
+      query: () => ({
+        insertGraphAndFetch: async (obj: any) => Promise.resolve(obj)
+      }),
+      relationMappings: {
+        cuboids: {},
+      }
+    }
+  };
+})
+
+
+
+jest.mock('../Cuboid', () => {
+  const originalModule = jest.requireActual('../Cuboid');
+
+  //Mock the default export and named export 'foo'
+  return {
+    __esModule: true,
+    ...originalModule,
+    default:  {
+      query: () => ({
+        insert: async(obj: any) => {
+          const volume = obj.width * obj.height * obj.depth
+          return Promise.resolve({...obj, volume})
+        }
+      }),
+      relationMappings: {
+        bag: {},
+      }
+    }
+  };
+})
+
+
 beforeAll(async () => {
   bag = await Bag.query().insertGraphAndFetch({
     volume: 100,

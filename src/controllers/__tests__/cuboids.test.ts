@@ -7,7 +7,69 @@ import { Bag, Cuboid } from '../../models';
 import factories from '../../factories';
 import urlJoin from 'url-join';
 
+const bagTable: any[] = []
+const cubeTable: any[] = []
+
 const server = app.listen();
+const getBag = (id: number) => bagTable.find((bag) => bag.id === id)
+
+jest.mock('../../models', () => {
+  const originalModule = jest.requireActual('../../models');
+
+  //Mock the default export and named export 'foo'
+  return {
+    __esModule: true,
+    ...originalModule,
+    Cuboid:  {
+      relationMappings: {
+        bag: {},
+      },
+       query: () => ({
+          insert: async(obj: any) => {
+            const volume = obj.width * obj.height * obj.depth
+            const bag = getBag(obj.bagId)
+            const id = Math.floor(Math.random()* 100)
+            const cube = {...obj, volume, id, bag: {} }
+            cubeTable.push(cube)
+            return Promise.resolve(cube)
+          }, 
+          findById: (id: number) => ({
+            withGraphFetched: () => {
+              const cube = cubeTable.find((cb) => Number(cb.id) === Number(id))
+              return Promise.resolve(cube)
+            }
+          }),
+          findByIds: () => ({
+            withGraphFetched: () => Promise.resolve(cubeTable)
+          })
+        }),
+
+    },
+    Bag: {
+      relationMappings: {
+        Cuboid: {},
+      },
+      query: () => ({
+        insert: async ({
+          volume,
+          title,
+        }:{
+          volume: string,
+          title: string
+        }) => {
+          const newObj = { 
+            volume,
+            title,
+            id: Math.floor(Math.random()* 100)
+          }
+          bagTable.push(newObj)
+          return Promise.resolve(newObj)
+        }
+        
+      })
+    }
+  };
+})
 
 afterAll(() => server.close());
 

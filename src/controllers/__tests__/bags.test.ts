@@ -7,6 +7,40 @@ import { Bag } from '../../models';
 import factories from '../../factories';
 
 const server = app.listen();
+const bagTable: any[] = []
+
+jest.mock('../../models', () => {
+  const originalModule = jest.requireActual('../../models');
+
+  //Mock the default export and named export 'foo'
+  return {
+    __esModule: true,
+    ...originalModule,
+    Bag: {
+      relationMappings: {
+        Cuboid: {},
+      },
+      query: () => ({
+        insert: async ({
+          volume,
+          title,
+        }:{
+          volume: string,
+          title: string
+        }) => {
+          const newObj = { 
+            volume,
+            title,
+            id: Math.floor(Math.random()* 100)
+          }
+          bagTable.push(newObj)
+          return Promise.resolve(newObj)
+        }
+        
+      })
+    }
+  };
+})
 
 afterAll(() => server.close());
 

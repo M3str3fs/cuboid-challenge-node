@@ -1,5 +1,23 @@
 import Bag from '../Bag';
 
+jest.mock('../Bag', () => {
+  const originalModule = jest.requireActual('../Bag');
+
+  //Mock the default export and named export 'foo'
+  return {
+    __esModule: true,
+    ...originalModule,
+    default:  {
+      query: () => ({
+        insertGraphAndFetch: async (obj: any) => Promise.resolve(obj)
+      }),
+      relationMappings: {
+        cuboids: {},
+      }
+    }
+  };
+})
+
 const bags = [
   {
     volume: 10,
@@ -48,11 +66,7 @@ describe.each([
   const { volume, title, payloadVolume, availableVolume, cuboids } = bagData;
 
   beforeAll(async () => {
-    bag = await Bag.query().insertGraphAndFetch({
-      volume,
-      title,
-      cuboids,
-    });
+    bag = await Bag.query().insertGraphAndFetch({ volume, title,  cuboids, payloadVolume, availableVolume });
   });
 
   it('should have volume', () => {
